@@ -15,12 +15,14 @@ if os.listdir("../../data/"):
     tree = ET.parse("../../data/PrixCarburants_instantane.xml")
     root = tree.getroot()
     interesting_pomp = [item for item in root if item.attrib["cp"][:2] == "86"]
-    val = [
-        [(item[i].tag, item[i].attrib) for i in range(len(item))]
-        for item in interesting_pomp
-    ]
-    for item in val[:3]:
-        print(parser(item))
+    for item in interesting_pomp:
+        print("Longitude :", item.attrib["longitude"], "\n")
+        print("Latitude :", item.attrib["latitude"], "\n")
+        print("Code Postal :", item.attrib["cp"], "\n")
+
+        for sub_item in item:
+            print(sub_item.tag, sub_item.attrib)
+        print("\n\n")
 
 
 else:
