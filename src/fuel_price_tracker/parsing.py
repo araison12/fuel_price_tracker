@@ -1,4 +1,5 @@
 import os
+from types import prepare_class
 import xml.etree.ElementTree as ET
 import argparse
 import manage_data
@@ -27,15 +28,13 @@ class Pomp(object):
         # self.others = [node[][i].text for i in range(len(node[2]))]
 
     def info(self):
-        string = ""
+        string = "---------------------------\n"
         for key, value, data, index in zip(
             self.tag_list, self.text_list, self.attrib_list, range(len(self.tag_list))
         ):
             if key == "services":
                 string += f"""{key} : {', '.join([self.node[index][i].text for i in range(len(self.node[index]))])}\n"""
             elif key == "prix":
-                keys = list(data.keys())
-                keys.remove("id")
                 string += f"""{key} : {data['nom']} : {data['valeur']} € (dernière mise à jour {data['maj']})\n"""
             elif data == {}:
                 string += f"""{key} : {value}\n"""
@@ -47,7 +46,31 @@ class Pomp(object):
 
 tree = ET.parse("../../data/PrixCarburants_instantane.xml")
 root = tree.getroot()
-interesting_pomp = [
-    Pomp(item).info() for item in root if item.attrib["cp"][:2] == args.dept
-]
-print(interesting_pomp[19])
+interesting_pomp = " ".join(
+    [Pomp(item).info() for item in root if item.attrib["cp"][:2] == args.dept]
+)
+
+import dotenv
+import smtplib
+from email.mime.text import MIMEText
+
+dotenv.load_dotenv()
+
+sender = os.getenv("EMAIL")
+password = os.getenv("PASSWORD")
+receivers = [os.getenv("ADRESS_1"), os.getenv("ADRESS_2"), os.getenv("ADRESS_3")]
+
+smtp_serv = os.getenv("SERVER")
+port = 465
+msg = MIMEText(interesting_pomp)
+
+msg["Subject"] = "Prix carburants de la vienne aujourd'hui"
+msg["From"] = "services@adriorsn.eu"
+msg["To"] = receivers
+
+with smtplib.SMTP_SSL("localhost", port) as server:
+
+    server.login(sender, password)
+    for person in receivers:
+        server.sendmail(sender, person, msg.as_string())
+        print("Successfully sent email")
